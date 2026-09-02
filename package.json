@@ -44,6 +44,7 @@
   },
   "scripts": {
     "build": "rm -rf dist && npm run prepack",
+    "build-copy-non-ts-files": "cp -r src/ui/* dist/ui/",
     "check-types": "tsc --noEmit",
     "commitlint": "commitlint --from=$(git rev-parse $(git cherry origin/main | head -n 1 | cut -c 3-)^1)",
     "lint": "npm run lint-ts && npm run lint-css",
@@ -53,7 +54,7 @@
     "format-css": "stylelint \"**/*.{css,scss}\" --fix",
     "format-prettier": "prettier --write .",
     "format-prettier-check": "prettier --check .",
-    "prepack": "tsc",
+    "prepack": "tsc && npm run build-copy-non-ts-files",
     "test": "node --test"
   },
   "repository": {
