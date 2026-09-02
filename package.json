@@ -109,5 +109,8 @@
   "peerDependencies": {
     "govuk-frontend": "6.x",
     "nunjucks": "3.x"
+  },
+  "allowScripts": {
+    "@parcel/watcher": false
   }
 }
