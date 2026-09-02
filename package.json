@@ -1,0 +1,82 @@
+{
+  "name": "@planning-inspectorate/core",
+  "version": "0.0.0-semantically-released",
+  "description": "Common Node.js and Nunjucks utilities, components, and libraries",
+  "main": "dist/index.js",
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.21.0"
+  },
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "rm -rf dist && npm run prepack",
+    "check-types": "tsc --noEmit",
+    "commitlint": "commitlint --from=$(git rev-parse $(git cherry origin/main | head -n 1 | cut -c 3-)^1)",
+    "lint": "npm run lint-ts && npm run lint-css",
+    "lint-css": "stylelint \"**/*.{css,scss}\"",
+    "lint-ts": "npx eslint .",
+    "format": "npm run format-prettier && npm run format-css",
+    "format-css": "stylelint \"**/*.{css,scss}\" --fix",
+    "format-prettier": "prettier --write .",
+    "format-prettier-check": "prettier --check .",
+    "prepack": "tsc",
+    "test": "node --test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Planning-Inspectorate/core.git"
+  },
+  "dependencies": {
+    "@azure/identity": "4.x",
+    "@azure/msal-common": "16.x",
+    "@azure/msal-node": "6.x",
+    "@prisma/client-runtime-utils": "7.x",
+    "@redis/entraid": "6.x",
+    "connect-redis": "10.x",
+    "express": "5.x",
+    "express-session": "1.x",
+    "helmet": "8.x",
+    "lusca": "1.x",
+    "pino": "10.x",
+    "redis": "6.x",
+    "sass": "1.x"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.1",
+    "@commitlint/config-conventional": "^21.0.2",
+    "@eslint/js": "^10.0.1",
+    "@planning-inspectorate/coding-standards": "^1.1.2",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/express": "^5.0.6",
+    "@types/express-session": "^1.19.0",
+    "@types/lusca": "^1.7.5",
+    "@types/node": "^26.2.0",
+    "@types/nunjucks": "^3.2.6",
+    "@typescript/native": "npm:typescript@^7.0.2",
+    "cookie-parser": "^1.4.7",
+    "eslint": "^10.8.1",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-check-file": "^3.3.2",
+    "globals": "^17.11.0",
+    "lint-staged": "^17.3.0",
+    "prettier": "^3.9.6",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "prettier-plugin-prisma": "^5.0.0",
+    "stylelint": "^17.14.1",
+    "stylelint-config-prettier-scss": "^1.0.0",
+    "stylelint-config-recess-order": "^7.8.0",
+    "stylelint-config-standard-scss": "^17.0.0",
+    "stylelint-order": "^8.1.1",
+    "stylelint-scss": "^7.2.0",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
+    "typescript-eslint": "^8.67.0"
+  },
+  "peerDependencies": {
+    "govuk-frontend": "6.x",
+    "nunjucks": "3.x"
+  }
+}

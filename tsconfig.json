@@ -1,0 +1,18 @@
+{
+	"include": ["**/*.ts"],
+	"exclude": ["node_modules", "**/*.test.ts"],
+	"compilerOptions": {
+		"rootDir": "src",
+		"outDir": "dist",
+		"allowSyntheticDefaultImports": true,
+		"esModuleInterop": true,
+		"erasableSyntaxOnly": true,
+		"module": "NodeNext",
+		"moduleResolution": "nodenext",
+		"rewriteRelativeImportExtensions": true,
+		"declaration": true,
+		"strict": true,
+		"target": "esnext",
+		"skipLibCheck": true
+	}
+}

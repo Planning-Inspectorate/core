@@ -1,0 +1,4 @@
+# no need to source files
+*.*ts
+# ensure type definitions are published
+!*.d.*ts
