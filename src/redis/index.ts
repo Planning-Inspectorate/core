@@ -13,3 +13,7 @@ export function initRedis(config: RedisConfig, logger: Logger): RedisClient | nu
 
 	return new RedisClient(config.redis, logger, config.redisPrefix);
 }
+
+export * from './msal-cache-client.ts';
+export * from './partition-manager.ts';
+export * from './redis-client.ts';

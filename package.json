@@ -9,8 +9,38 @@
     "node": ">=22.21.0"
   },
   "exports": {
-    "types": "./dist/index.d.ts",
-    "import": "./dist/index.js"
+   ".": {
+     "types": "./dist/index.d.ts",
+     "default": "./dist/index.js"
+   },
+    "./app": {
+      "types": "./dist/app/index.d.ts",
+      "default": "./dist/app/index.js"
+    },
+    "./controllers": {
+      "types": "./dist/controllers/index.d.ts",
+      "default": "./dist/controllers/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "default": "./dist/middleware/index.js"
+    },
+    "./redis": {
+      "types": "./dist/redis/index.d.ts",
+      "default": "./dist/redis/index.js"
+    },
+    "./testing": {
+      "types": "./dist/testing/index.d.ts",
+      "default": "./dist/testing/index.js"
+    },
+    "./ui": {
+      "types": "./dist/ui/index.d.ts",
+      "default": "./dist/ui/index.js"
+    },
+    "./util": {
+      "types": "./dist/util/index.d.ts",
+      "default": "./dist/util/index.js"
+    }
   },
   "scripts": {
     "build": "rm -rf dist && npm run prepack",
