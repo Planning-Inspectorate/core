@@ -6,7 +6,7 @@ import type { AsyncRequestHandler } from '../util/async-handler.ts';
 import { asyncHandler } from '../util/async-handler.ts';
 
 interface DatabaseClient {
-	$queryRaw: (query: TemplateStringsArray) => Promise<void>
+	$queryRaw: (query: TemplateStringsArray) => Promise<void>;
 }
 
 interface MonitoringRoutesOptions {
