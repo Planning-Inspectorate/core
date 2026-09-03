@@ -9,10 +9,10 @@
     "node": ">=22.21.0"
   },
   "exports": {
-   ".": {
-     "types": "./dist/index.d.ts",
-     "default": "./dist/index.js"
-   },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
     "./app": {
       "types": "./dist/app/index.d.ts",
       "default": "./dist/app/index.js"
@@ -113,6 +113,9 @@
   "peerDependencies": {
     "govuk-frontend": "6.x",
     "nunjucks": "3.x"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "allowScripts": {
     "@parcel/watcher": false
