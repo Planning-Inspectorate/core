@@ -33,10 +33,7 @@ function createApp() {
 }
 
 async function newTestServer(ctx: TestContext): Promise<TestServer> {
-	const server = new TestServer(createApp());
-	await server.start();
-	ctx.after(async () => await server.stop());
-	return server;
+	return TestServer.withContext(ctx, createApp());
 }
 
 describe('TestServer', () => {
