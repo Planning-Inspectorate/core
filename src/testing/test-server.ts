@@ -1,4 +1,5 @@
 import http from 'http';
+import type { TestContext } from 'node:test';
 
 const DEFAULT_OPTIONS: RequestInit = {
 	credentials: 'include'
@@ -12,6 +13,13 @@ export class TestServer {
 	rememberCookies: boolean;
 	server: http.Server | null;
 	port: number | null;
+
+	static async withContext(ctx: TestContext, requestListener: http.RequestListener): Promise<TestServer> {
+		const server = new TestServer(requestListener);
+		await server.start();
+		ctx.after(async () => await server.stop());
+		return server;
+	}
 
 	/**
 	 * @param requestListener
