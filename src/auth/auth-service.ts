@@ -2,7 +2,7 @@ import type { AccountInfo, AuthenticationResult, Configuration } from '@azure/ms
 import { ConfidentialClientApplication } from '@azure/msal-node';
 import type { RequestHandler } from 'express';
 import type { Logger } from 'pino';
-import type { RedisClient } from '../redis/index.ts';
+import type { IRedisClient } from '../redis/index.ts';
 import type { AuthConfig } from './config.ts';
 import { buildMsalConfig } from './config.ts';
 import * as authSession from './session.service.ts';
@@ -16,13 +16,13 @@ type AuthenticationResultWithNonce = AuthenticationResult & {
 export interface AuthServiceOptions {
 	config: AuthConfig;
 	logger: Logger;
-	redisClient: RedisClient | null;
+	redisClient: IRedisClient | null;
 }
 
 export class AuthService {
 	readonly #config: AuthConfig;
 	readonly #logger: Logger;
-	readonly #redisClient: RedisClient | null;
+	readonly #redisClient: IRedisClient | null;
 	readonly #scopes: string[];
 	#msalClient: ConfidentialClientApplication | null;
 

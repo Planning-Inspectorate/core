@@ -1,8 +1,8 @@
-import type { RedisClusterType } from 'redis';
+import type { RedisClientType, RedisClusterType } from 'redis';
 
 export class MSALCacheClient {
-	private readonly redisClient: RedisClusterType;
-	constructor(redisClient: RedisClusterType) {
+	private readonly redisClient: RedisClusterType | RedisClientType;
+	constructor(redisClient: RedisClusterType | RedisClientType) {
 		this.redisClient = redisClient;
 	}
 

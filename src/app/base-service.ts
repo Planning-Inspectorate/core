@@ -1,5 +1,5 @@
 import type { Logger } from 'pino';
-import type { RedisClient } from '../redis/index.ts';
+import type { IRedisClient } from '../redis/index.ts';
 import { initRedis } from '../redis/index.ts';
 import { initLogger } from '../util/logger.ts';
 
@@ -32,7 +32,7 @@ export class BaseService<T = unknown> {
 	#config: BaseConfig;
 	logger: Logger;
 	dbClient: T;
-	redisClient: RedisClient | null;
+	redisClient: IRedisClient | null;
 
 	constructor(config: BaseConfig, initDatabaseClient: (config: BaseConfig, logger: Logger) => T) {
 		this.#config = config;
