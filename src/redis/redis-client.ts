@@ -10,6 +10,9 @@ import { PartitionManager } from './partition-manager.ts';
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 
+/**
+ * A Redis Client using Entra auth
+ */
 export class RedisClient {
 	private readonly prefix: string;
 	private readonly logger: Logger;
