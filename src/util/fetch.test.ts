@@ -1,0 +1,44 @@
+import type http from 'http';
+import assert from 'node:assert/strict';
+import { describe, it, type TestContext } from 'node:test';
+import { TestServer } from '../testing/index.ts';
+import { fetchWithTimeout } from './fetch.ts';
+import { sleep } from './sleep.ts';
+import { TimeoutError } from './timeout-error.ts';
+
+describe('fetch', () => {
+	describe('fetchWithTimeout', () => {
+		async function newTestServer(ctx: TestContext, handler: http.RequestListener): Promise<TestServer> {
+			const server = new TestServer(handler);
+			await server.start();
+			ctx.after(async () => await server.stop());
+			return server;
+		}
+
+		it('should succeed if a response is received before timeout', async (ctx) => {
+			const server = await newTestServer(ctx, (req, res) => {
+				res.statusCode = 200;
+				res.end('Hello, world!');
+			});
+			const res = await fetchWithTimeout(`http://localhost:${server.port}/anything`, { timeoutMs: 100 });
+			assert.ok(res.ok);
+		});
+
+		it('should throw if a response is not received before timeout', async (ctx) => {
+			const server = await newTestServer(ctx, async (req, res) => {
+				await sleep(500);
+				res.statusCode = 200;
+				res.end('Hello, world!');
+			});
+			await assert.rejects(
+				() => fetchWithTimeout(`http://localhost:${server.port}/anything`, { timeoutMs: 100 }),
+				(thrown) => {
+					assert.ok(thrown instanceof TimeoutError);
+					assert.strictEqual(thrown.timeoutMs, 100);
+					assert.match(thrown.message, /timed out after 100ms/);
+					return true;
+				}
+			);
+		});
+	});
+});
