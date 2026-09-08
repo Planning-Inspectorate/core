@@ -1,6 +1,5 @@
 import type { Request, RequestHandler } from 'express';
 import session from 'express-session';
-import lusca from 'lusca';
 import type { IRedisClient } from '../redis/index.ts';
 
 const DEFAULT_SESSION_FIELD = 'cases';
@@ -14,7 +13,7 @@ interface InitSessionOptions {
 	secret: string;
 }
 
-function initSessionMiddleware({ redis, secure, secret }: InitSessionOptions): RequestHandler {
+export function initSessionMiddleware({ redis, secure, secret }: InitSessionOptions): RequestHandler {
 	let store;
 	if (redis) {
 		store = redis.store;
@@ -30,20 +29,10 @@ function initSessionMiddleware({ redis, secure, secret }: InitSessionOptions): R
 		unset: 'destroy',
 		cookie: {
 			secure,
+			sameSite: 'lax',
 			maxAge: 86_400_000
 		}
 	});
-}
-
-/**
- * Initialise session middleware with CSRF included
- */
-export function initSessionMiddlewareWithCsrf(opts: {
-	redis: IRedisClient | null;
-	secret: string;
-	secure: boolean;
-}): RequestHandler[] {
-	return [initSessionMiddleware(opts), lusca.csrf()];
 }
 
 /**

@@ -6,8 +6,9 @@ import type { HelmetCspDirectives } from '../middleware/csp-middleware.ts';
 import { initContentSecurityPolicyMiddlewares } from '../middleware/csp-middleware.ts';
 import { buildDefaultErrorHandlerMiddleware, notFoundHandler } from '../middleware/errors.ts';
 import { buildLogRequestsMiddleware } from '../middleware/log-requests.ts';
-import { initSessionMiddlewareWithCsrf } from '../util/session.ts';
+import { initSessionMiddleware } from '../util/session.ts';
 import type { BaseService } from './base-service.ts';
+import { buildCsrfMiddleware, type RouteMatch } from './csrf.ts';
 
 interface BaseAppOptions {
 	service: BaseService;
@@ -15,6 +16,20 @@ interface BaseAppOptions {
 	middlewares: Handler[];
 	configureNunjucks: () => Environment;
 	cspDirectives?: HelmetCspDirectives;
+	/**
+	 * Routes which accept multipart/form-data (such as file uploads)
+	 * CSRF is bypassed only for multipart/form-data POST requests to these routes, and must be added after the multer middleware
+	 *
+	 * Can either be an exact-match string, or a regex
+	 * All routes must be a POST.
+	 */
+	multiPartFormRoutes?: RouteMatch[];
+	/**
+	 * Passed to lusca.csrf blocklist option - skips CSRF protection
+	 * Exact match only
+	 * @see https://github.com/krakenjs/lusca#luscacsrfoptions
+	 */
+	csrfRouteBypass?: string[];
 }
 
 export function createBaseApp({
@@ -22,7 +37,9 @@ export function createBaseApp({
 	router,
 	middlewares,
 	configureNunjucks,
-	cspDirectives = cspDirectiveDefaults
+	cspDirectives = cspDirectiveDefaults,
+	csrfRouteBypass = [],
+	multiPartFormRoutes = []
 }: BaseAppOptions): Express {
 	// create an express app, and configure it for our usage
 	const app = express();
@@ -35,12 +52,14 @@ export function createBaseApp({
 	app.use(bodyParser.urlencoded({ extended: true }));
 	app.use(bodyParser.json());
 
-	const sessionMiddleware = initSessionMiddlewareWithCsrf({
+	const sessionMiddleware = initSessionMiddleware({
 		redis: service.redisClient,
 		secure: service.secureSession,
 		secret: service.sessionSecret
 	});
-	app.use(...sessionMiddleware);
+	app.use(sessionMiddleware);
+
+	app.use(buildCsrfMiddleware(csrfRouteBypass, multiPartFormRoutes));
 
 	app.use(...initContentSecurityPolicyMiddlewares(cspDirectives));
 
