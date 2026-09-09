@@ -1,6 +1,7 @@
 import type { Request, RequestHandler } from 'express';
 import session from 'express-session';
 import type { IRedisClient } from '../redis/index.ts';
+import { assertSafeKey } from './prototype.ts';
 
 const DEFAULT_SESSION_FIELD = 'cases';
 
@@ -47,6 +48,8 @@ export function addSessionData(
 	if (!req.session) {
 		throw new Error('request session required');
 	}
+	assertSafeKey(id, 'id');
+	assertSafeKey(sessionField, 'sessionField');
 	const session = req.session as unknown as SessionRecord;
 	const field = session[sessionField] || (session[sessionField] = {});
 	const fieldProps = field[id] || (field[id] = {});
@@ -66,6 +69,9 @@ export function readSessionData<T>(
 	if (!req.session) {
 		return false;
 	}
+	assertSafeKey(id, 'id');
+	assertSafeKey(field, 'field');
+	assertSafeKey(sessionField, 'sessionField');
 	const session = req.session as unknown as SessionRecord;
 	const sessionFieldData = session[sessionField] as SessionFieldData | undefined;
 	const fieldProps: Record<string, unknown> = (sessionFieldData && sessionFieldData[id]) || {};
@@ -84,16 +90,20 @@ export function clearSessionData(
 	if (!req.session) {
 		return; // no need to error here
 	}
+	assertSafeKey(id, 'id');
+	assertSafeKey(sessionField, 'sessionField');
 	const session = req.session as unknown as SessionRecord;
 	const sessionFieldData = session[sessionField] as SessionFieldData | undefined;
 	if (fieldOrFields instanceof Array) {
 		fieldOrFields.forEach((field) => {
+			assertSafeKey(field, 'field');
 			const fieldProps: Record<string, unknown> = (sessionFieldData && sessionFieldData[id]) || {};
 			delete fieldProps[field];
 		});
 		return;
 	}
 
+	assertSafeKey(fieldOrFields, 'fieldOrFields');
 	const fieldProps: Record<string, unknown> = (sessionFieldData && sessionFieldData[id]) || {};
 	delete fieldProps[fieldOrFields];
 }

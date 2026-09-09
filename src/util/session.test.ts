@@ -9,6 +9,10 @@ describe('session', () => {
 			const req = {};
 			assert.throws(() => addSessionData(req, 'id', {}));
 		});
+		it('should throw if invalid key', () => {
+			const req = { session: {} };
+			assert.throws(() => addSessionData(req, '__proto__', {}));
+		});
 		it('should add session data', () => {
 			const req = { session: {} };
 			addSessionData(req, 'id', { data: '1', d: 2 });
@@ -38,6 +42,10 @@ describe('session', () => {
 			const data = readSessionData(req, 'id2', 'data', 'default');
 			assert.deepStrictEqual(data, 'default');
 		});
+		it('should throw if invalid key', () => {
+			const req = { session: {} };
+			assert.throws(() => readSessionData(req, '__proto__', 'data', 'default'));
+		});
 	});
 	describe('clearSessionData', () => {
 		it('should return if no session', () => {
@@ -66,6 +74,10 @@ describe('session', () => {
 					}
 				}
 			});
+		});
+		it('should throw if invalid key', () => {
+			const req = { session: {} };
+			assert.throws(() => clearSessionData(req, '__proto__', 'data'));
 		});
 	});
 });

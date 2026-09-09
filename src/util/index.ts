@@ -5,6 +5,7 @@ export * from './database.ts';
 export * from './fetch.ts';
 export * from './logger.ts';
 export * from './map-cache.ts';
+export * from './prototype.ts';
 export * from './retry.ts';
 export * from './session.ts';
 export * from './sleep.ts';
