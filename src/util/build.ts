@@ -92,15 +92,16 @@ async function deleteOldCssFiles({ staticDir, filename }: { staticDir: string; f
 interface AssetOptions {
 	staticDir: string;
 	repoRoot: string;
+	copyMoj?: boolean;
 }
 
 /**
  * Copy govuk assets into the .static folder
+ * Will also copy moj assets if copyMoj is set
  *
  * @see https://frontend.design-system.service.gov.uk/importing-css-assets-and-javascript/#copy-the-font-and-image-files-into-your-application
- * @returns {Promise<void>}
  */
-async function copyAssets({ staticDir, repoRoot }: AssetOptions): Promise<void> {
+async function copyAssets({ staticDir, repoRoot, copyMoj }: AssetOptions): Promise<void> {
 	const images = path.join(repoRoot, 'node_modules/govuk-frontend/dist/govuk/assets/images');
 	const fonts = path.join(repoRoot, 'node_modules/govuk-frontend/dist/govuk/assets/fonts');
 	const js = path.join(repoRoot, 'node_modules/govuk-frontend/dist/govuk/govuk-frontend.min.js');
@@ -116,6 +117,15 @@ async function copyAssets({ staticDir, repoRoot }: AssetOptions): Promise<void> 
 	await copyFolder(fonts, staticFonts);
 	await copyFile(js, staticJs);
 	await copyFile(manifest, staticManifest);
+
+	if (copyMoj) {
+		const mojImages = path.join(repoRoot, 'node_modules/@ministryofjustice/frontend/moj/assets/images');
+		const mojJs = path.join(repoRoot, 'node_modules/@ministryofjustice/frontend/moj/moj-frontend.min.js');
+		const staticMojJs = path.join(staticDir, 'assets', 'js', 'moj-frontend.min.js');
+		// copy images and js for @ministryofjustice/frontend
+		await copyFolder(mojImages, staticImages);
+		await copyFile(mojJs, staticMojJs);
+	}
 }
 
 interface AutocompleteOptions {
@@ -139,6 +149,7 @@ async function copyAutocompleteAssets({ staticDir, root }: AutocompleteOptions):
 
 interface BuildOptions extends SassOptions {
 	accessibleAutocompleteRoot?: string;
+	copyMoj?: boolean;
 }
 
 interface Replacement {
@@ -171,13 +182,14 @@ export function runBuild({
 	staticDir,
 	srcDir,
 	repoRoot,
+	copyMoj,
 	accessibleAutocompleteRoot,
 	localsFile,
 	useQueryStringForHash
 }: BuildOptions): Promise<void[]> {
 	const tasks = [
 		compileSass({ staticDir, srcDir, repoRoot, localsFile, useQueryStringForHash }),
-		copyAssets({ staticDir, repoRoot })
+		copyAssets({ staticDir, repoRoot, copyMoj })
 	];
 	if (accessibleAutocompleteRoot) {
 		tasks.push(copyAutocompleteAssets({ staticDir, root: accessibleAutocompleteRoot }));
