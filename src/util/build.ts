@@ -15,6 +15,11 @@ interface SassOptions {
 	 * a file to update with the new css filename
 	 */
 	localsFile?: string;
+	/**
+	 * If true, the style file name will be 'style.css' and the version hash will be appended as a query string
+	 * parameter (e.g. `style.css?v=<hash>`).
+	 */
+	useQueryStringForHash?: boolean;
 }
 
 /**
@@ -23,7 +28,13 @@ interface SassOptions {
  *
  * @see https://sass-lang.com/documentation/js-api/#md:usage
  */
-async function compileSass({ staticDir, srcDir, repoRoot, localsFile }: SassOptions): Promise<void> {
+async function compileSass({
+	staticDir,
+	srcDir,
+	repoRoot,
+	localsFile,
+	useQueryStringForHash
+}: SassOptions): Promise<void> {
 	const styleFile = path.join(srcDir, 'app', 'sass/style.scss');
 	const out = sass.compile(styleFile, {
 		// ensure scss can find the govuk-frontend folders
@@ -35,7 +46,8 @@ async function compileSass({ staticDir, srcDir, repoRoot, localsFile }: SassOpti
 	});
 	// cache-busting: generate a filename for the css based on the content
 	const hash = crypto.createHash('sha256').update(out.css).digest('hex').slice(0, 8);
-	const filename = `style-${hash}.css`;
+	const suffix = useQueryStringForHash ? '' : `-${hash}`;
+	const filename = `style${suffix}.css`;
 	const outputPath = path.join(staticDir, filename);
 	// make sure the static directory exists
 	await fs.mkdir(staticDir, { recursive: true });
@@ -43,11 +55,16 @@ async function compileSass({ staticDir, srcDir, repoRoot, localsFile }: SassOpti
 	await fs.writeFile(outputPath, out.css);
 
 	if (localsFile) {
+		const styleHref = useQueryStringForHash ? `${filename}?v=${hash}` : filename;
 		// update the given file with the new css filename
 		await replaceInFile(localsFile, [
 			{
-				replace: /'style(-[0-9a-f]{8})?\.css'/,
-				with: `'${filename}'`
+				// matches:
+				// 'style.css'
+				// 'style-<hash>.css'
+				// 'style.css?v=<hash>'
+				replace: /'style(-[0-9a-f]{8})?\.css(\?v=[0-9a-f]{8})?'/,
+				with: `'${styleHref}'`
 			}
 		]);
 	}
@@ -120,12 +137,8 @@ async function copyAutocompleteAssets({ staticDir, root }: AutocompleteOptions):
 	await copyFile(css, staticCss);
 }
 
-interface BuildOptions {
-	staticDir: string;
-	srcDir: string;
-	repoRoot: string;
+interface BuildOptions extends SassOptions {
 	accessibleAutocompleteRoot?: string;
-	localsFile?: string;
 }
 
 interface Replacement {
@@ -159,9 +172,13 @@ export function runBuild({
 	srcDir,
 	repoRoot,
 	accessibleAutocompleteRoot,
-	localsFile
+	localsFile,
+	useQueryStringForHash
 }: BuildOptions): Promise<void[]> {
-	const tasks = [compileSass({ staticDir, srcDir, repoRoot, localsFile }), copyAssets({ staticDir, repoRoot })];
+	const tasks = [
+		compileSass({ staticDir, srcDir, repoRoot, localsFile, useQueryStringForHash }),
+		copyAssets({ staticDir, repoRoot })
+	];
 	if (accessibleAutocompleteRoot) {
 		tasks.push(copyAutocompleteAssets({ staticDir, root: accessibleAutocompleteRoot }));
 	}
