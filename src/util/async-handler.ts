@@ -1,8 +1,11 @@
 import type { RequestHandler } from 'express';
 import type core from 'express-serve-static-core';
 
-// an async handler type, since RequestHandler is sync and does not return a Promise
-// adapted from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/8e274af6ed512811d15426cca3b946cd9227a255/types/express-serve-static-core/index.d.ts#L52-L65
+/**
+ * An async handler type, since Express's RequestHandler is synchronous and does not return a Promise.
+ *
+ * adapted from https://github.com/DefinitelyTyped/DefinitelyTyped/blob/8e274af6ed512811d15426cca3b946cd9227a255/types/express-serve-static-core/index.d.ts#L52-L65
+ */
 export type AsyncRequestHandler<
 	P = core.ParamsDictionary,
 	ResBody = unknown,
@@ -14,6 +17,25 @@ export type AsyncRequestHandler<
 	res: core.Response<ResBody, LocalsObj>,
 	next?: core.NextFunction
 ) => Promise<void>;
+
+/**
+ * Type alias for just overriding body, and optionally locals
+ */
+export type AsyncRequestHandlerWithBody<
+	Body,
+	LocalsObj extends Record<string, unknown> = Record<string, unknown>
+> = AsyncRequestHandler<core.ParamsDictionary, unknown, Body, core.Query, LocalsObj>;
+
+/**
+ * Type alias for just overriding locals
+ */
+export type AsyncRequestHandlerWithLocals<LocalsObj extends Record<string, unknown>> = AsyncRequestHandler<
+	core.ParamsDictionary,
+	unknown,
+	unknown,
+	core.Query,
+	LocalsObj
+>;
 
 export function asyncHandler<A, B, C, D, E extends Record<string, unknown>>(
 	// supports async or sync handlers
