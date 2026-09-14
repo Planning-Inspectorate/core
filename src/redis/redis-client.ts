@@ -84,6 +84,10 @@ export class RedisClient {
 		this.clientWrapper = new MSALCacheClient(this.client);
 	}
 
+	get fullClient() {
+		return this.client;
+	}
+
 	makeCachePlugin(sessionId: string): DistributedCachePlugin {
 		const partitionManager = new PartitionManager(this.clientWrapper, sessionId, this.logger, this.prefix);
 		return new DistributedCachePlugin(this.clientWrapper, partitionManager as IPartitionManager);
