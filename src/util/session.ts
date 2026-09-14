@@ -1,5 +1,5 @@
 import type { Request, RequestHandler } from 'express';
-import session from 'express-session';
+import session, { type SessionOptions } from 'express-session';
 import type { IRedisClient } from '../redis/index.ts';
 import { assertSafeKey } from './prototype.ts';
 
@@ -8,13 +8,23 @@ const DEFAULT_SESSION_FIELD = 'cases';
 type SessionFieldData = Record<string, Record<string, unknown>>;
 type SessionRecord = Record<string, SessionFieldData>;
 
-interface InitSessionOptions {
+interface InitSessionOptions extends Omit<SessionOptions, 'cookie'> {
 	redis: IRedisClient | null;
 	secure: boolean;
 	secret: string;
+	/**
+	 * Defaults to 24 hours
+	 */
+	maxAge?: number;
 }
 
-export function initSessionMiddleware({ redis, secure, secret }: InitSessionOptions): RequestHandler {
+export function initSessionMiddleware({
+	redis,
+	secure,
+	secret,
+	maxAge,
+	...options
+}: InitSessionOptions): RequestHandler {
 	let store;
 	if (redis) {
 		store = redis.store;
@@ -31,8 +41,9 @@ export function initSessionMiddleware({ redis, secure, secret }: InitSessionOpti
 		cookie: {
 			secure,
 			sameSite: 'lax',
-			maxAge: 86_400_000
-		}
+			maxAge: maxAge ?? 86_400_000
+		},
+		...options
 	});
 }
 
