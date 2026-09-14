@@ -1,6 +1,7 @@
 import type { Logger } from 'pino';
 import type { IRedisClient } from '../redis/index.ts';
 import { initRedis } from '../redis/index.ts';
+import type { InitSessionOptions } from '../util/index.ts';
 import { initLogger } from '../util/logger.ts';
 
 export interface DatabaseConfig {
@@ -63,6 +64,13 @@ export class BaseService<T = unknown> {
 
 	get sessionSecret() {
 		return this.#config.session.secret;
+	}
+
+	/**
+	 * Override this to configure session options such as maxAge
+	 */
+	get otherSessionOptions(): Omit<InitSessionOptions, 'redis' | 'secure' | 'secret'> {
+		return {};
 	}
 
 	get staticDir() {

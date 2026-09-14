@@ -8,7 +8,7 @@ const DEFAULT_SESSION_FIELD = 'cases';
 type SessionFieldData = Record<string, Record<string, unknown>>;
 type SessionRecord = Record<string, SessionFieldData>;
 
-interface InitSessionOptions extends Omit<SessionOptions, 'cookie'> {
+export interface InitSessionOptions extends Omit<SessionOptions, 'cookie'> {
 	redis: IRedisClient | null;
 	secure: boolean;
 	secret: string;
