@@ -11,7 +11,7 @@ interface DatabaseClient {
 
 interface MonitoringRoutesOptions {
 	logger: BaseLogger;
-	dbClient: DatabaseClient;
+	dbClient?: DatabaseClient;
 	gitSha?: string;
 }
 
@@ -34,23 +34,26 @@ export function handleHeadHealthCheck(_: Request, response: Response) {
 
 export function buildHandleHeathCheck(
 	logger: BaseLogger,
-	dbClient: DatabaseClient,
+	dbClient?: DatabaseClient,
 	gitSha?: string
 ): AsyncRequestHandler {
 	return async (_, response) => {
-		let database = false;
-		try {
-			await dbClient.$queryRaw`SELECT 1`;
-			database = true;
-		} catch (e) {
-			logger.warn(e, 'database connection error');
+		let database = 'NOT_CONFIGURED';
+		if (dbClient) {
+			try {
+				await dbClient.$queryRaw`SELECT 1`;
+				database = 'OK';
+			} catch (e) {
+				logger.warn(e, 'database connection error');
+				database = 'ERROR'; // should this be a different response code?
+			}
 		}
 
 		response.status(200).send({
 			status: 'OK',
 			uptime: process.uptime(),
 			commit: gitSha,
-			database: database ? 'OK' : 'ERROR' // should this be a different response code?
+			database: database
 		});
 	};
 }
