@@ -55,7 +55,8 @@ export function createBaseApp({
 	const sessionMiddleware = initSessionMiddleware({
 		redis: service.redisClient,
 		secure: service.secureSession,
-		secret: service.sessionSecret
+		secret: service.sessionSecret,
+		...service.otherSessionOptions
 	});
 	app.use(sessionMiddleware);
 
