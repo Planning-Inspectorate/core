@@ -9,3 +9,8 @@ export function cacheNoCacheMiddleware(req: Request, res: Response, next: NextFu
 	res.set('Cache-Control', 'no-cache');
 	next();
 }
+
+export function cacheNoCachePrivateMiddleware(req: Request, res: Response, next: NextFunction) {
+	res.set('Cache-Control', 'no-cache, private');
+	next();
+}
