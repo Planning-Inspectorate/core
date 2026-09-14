@@ -98,6 +98,7 @@ describe('auth', () => {
 			const redirectRes = await server.get(`/auth/redirect?code=${code}`, { redirect: 'manual' });
 			assert.equal(redirectRes.status, 302);
 			assert.equal(redirectRes.headers.get('location'), '/home');
+			assert.equal(redirectRes.headers.get('Cache-Control'), 'no-store');
 		});
 
 		it('should redirect to an error page when the redirect from MSAL is incomplete', async (ctx) => {
@@ -105,6 +106,7 @@ describe('auth', () => {
 			const res = await server.get('/auth/redirect', { redirect: 'manual' });
 			assert.equal(res.status, 302);
 			assert.match(res.headers.get('location'), /\/unauthenticated/);
+			assert.equal(res.headers.get('Cache-Control'), 'no-store');
 		});
 
 		it('should redirect to an error page when the nonce is absent from the acquired token', async (ctx) => {
@@ -117,6 +119,7 @@ describe('auth', () => {
 			assert.equal(authService.acquireTokenByCode.mock.callCount(), 1);
 			assert.equal(res.status, 302);
 			assert.match(res.headers.get('location'), /\/unauthenticated/);
+			assert.equal(res.headers.get('Cache-Control'), 'no-store');
 		});
 
 		it('should redirect to an error page when the nonce in the acquired token does not match', async (ctx) => {
@@ -163,6 +166,7 @@ describe('auth', () => {
 			const res = await server.get('/auth/redirect?code=msal_code', { redirect: 'manual' });
 			assert.equal(res.status, 302);
 			assert.match(res.headers.get('location'), /\/unauthenticated/);
+			assert.equal(res.headers.get('Cache-Control'), 'no-store');
 		});
 
 		it('should destroy the msal token cache and session upon logging out', async (ctx) => {

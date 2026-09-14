@@ -1,6 +1,7 @@
 import type { Handler, IRouter } from 'express';
 import { Router as createRouter } from 'express';
 import type { BaseService } from '../app/index.ts';
+import { cacheNoStoreMiddleware } from '../middleware/index.ts';
 import { asyncHandler } from '../util/index.ts';
 import { AuthService, clearAuthenticationData, registerAuthLocals } from './auth-service.ts';
 import type { AuthConfig } from './config.ts';
@@ -32,6 +33,9 @@ export function createRoutesAndGuards(service: ServiceWithAuth, authService?: Au
 			redisClient: service.redisClient
 		});
 	}
+
+	// don't cache any auth routes
+	router.use(cacheNoStoreMiddleware);
 
 	// setup controllers with auth service instance
 	const completeMsalAuthentication = buildCompleteMsalAuthentication(service.logger, authService);
