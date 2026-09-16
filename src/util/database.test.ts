@@ -79,5 +79,24 @@ describe('database', () => {
 				}
 			);
 		});
+		it('should not throw errors with name PrismaClientValidationError', () => {
+			const error = new Error('E101');
+			error.name = 'PrismaClientValidationError';
+			const logger = mockLogger();
+			assert.throws(
+				() =>
+					wrapPrismaError({
+						error,
+						logger,
+						message: 'updating case'
+					}),
+				(err) => {
+					assert.notStrictEqual(err, error);
+					assert.strictEqual(err.name, 'Error');
+					assert.match(err.message, /Error updating case/);
+					return true;
+				}
+			);
+		});
 	});
 });

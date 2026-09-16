@@ -23,13 +23,16 @@ interface WrapPrismaErrorOptions {
  */
 export function wrapPrismaError({ error, logger, message, logParams }: WrapPrismaErrorOptions) {
 	// don't show Prisma errors to the user
-	if (error instanceof PrismaClientKnownRequestError) {
-		logger.error({ error, ...logParams }, `error ${message}`);
-		throw new Error(`Error ${message} (${error.code})`);
-	}
-	if (error instanceof PrismaClientValidationError) {
-		logger.error({ error, ...logParams }, `error ${message}`);
-		throw new Error(`Error ${message} (${error.name})`);
+	if (error instanceof Error) {
+		// match by name to avoid issues with references to different @prisma package versions
+		if (error.name === PrismaClientKnownRequestError.name) {
+			logger.error({ error, ...logParams }, `error ${message}`);
+			throw new Error(`Error ${message} (${(error as PrismaClientKnownRequestError).code})`);
+		}
+		if (error.name === PrismaClientValidationError.name) {
+			logger.error({ error, ...logParams }, `error ${message}`);
+			throw new Error(`Error ${message} (${error.name})`);
+		}
 	}
 	throw error;
 }
