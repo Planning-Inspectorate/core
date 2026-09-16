@@ -4,7 +4,7 @@ import type { Logger } from 'pino';
 /**
  * Where clause cannot include an undefined ID, so either return a valid where clause or none
  */
-export function optionalWhere(id: string): undefined | { id: string } {
+export function optionalWhere(id?: string | undefined): undefined | { id: string } {
 	if (id) {
 		return { id };
 	}
