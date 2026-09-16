@@ -21,7 +21,7 @@ export interface BaseConfig {
 	session: {
 		redisPrefix: string;
 		redis?: string;
-		secret: string;
+		secret: string | string[];
 	};
 	staticDir: string;
 }

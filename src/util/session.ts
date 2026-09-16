@@ -11,7 +11,8 @@ type SessionRecord = Record<string, SessionFieldData>;
 export interface InitSessionOptions extends Omit<SessionOptions, 'cookie'> {
 	redis: IRedisClient | null;
 	secure: boolean;
-	secret: string;
+	// express-session supports an array of secrets, it assigns the first value but allows any in the array
+	secret: string | string[];
 	/**
 	 * Defaults to 24 hours
 	 */
