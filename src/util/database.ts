@@ -15,7 +15,7 @@ interface WrapPrismaErrorOptions {
 	error: unknown;
 	logger: Logger;
 	message: string;
-	logParams: Record<string, unknown>;
+	logParams?: Record<string, unknown>;
 }
 
 /**
