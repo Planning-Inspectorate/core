@@ -51,6 +51,12 @@ describe('database', () => {
 					assert.strictEqual(err.name, 'Error');
 					assert.match(err.message, /Error updating case/);
 					assert.match(err.message, /\(123\)/);
+
+					assert.strictEqual(logger.error.mock.callCount(), 1);
+					const loggerArgs = logger.error.mock.calls[0].arguments;
+					// should log the original error
+					assert.strictEqual(loggerArgs[0].error, error);
+					assert.strictEqual(loggerArgs[1], 'error updating case');
 					return true;
 				}
 			);
