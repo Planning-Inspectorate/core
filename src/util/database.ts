@@ -12,7 +12,7 @@ export function optionalWhere(id?: string | undefined): undefined | { id: string
 }
 
 interface WrapPrismaErrorOptions {
-	error: Error;
+	error: unknown;
 	logger: Logger;
 	message: string;
 	logParams: Record<string, unknown>;
