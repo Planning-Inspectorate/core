@@ -20,6 +20,11 @@ interface SassOptions {
 	 * parameter (e.g. `style.css?v=<hash>`).
 	 */
 	useQueryStringForHash?: boolean;
+	/**
+	 * If true, will generate a JSON manifest file in <staticDir>/manifest.json
+	 * with JSON content of `style.css`: '<style-href>' mapping
+	 */
+	generateManifestFile?: boolean;
 }
 
 /**
@@ -33,7 +38,8 @@ async function compileSass({
 	srcDir,
 	repoRoot,
 	localsFile,
-	useQueryStringForHash
+	useQueryStringForHash,
+	generateManifestFile
 }: SassOptions): Promise<void> {
 	const styleFile = path.join(srcDir, 'app', 'sass/style.scss');
 	const out = sass.compile(styleFile, {
@@ -54,8 +60,17 @@ async function compileSass({
 	// write the css file
 	await fs.writeFile(outputPath, out.css);
 
+	const styleHref = useQueryStringForHash ? `${filename}?v=${hash}` : filename;
+
+	// if configured, generate a simple manifest.json file with the generated style file link
+	if (generateManifestFile) {
+		const manifest = {
+			'style.css': styleHref
+		};
+		await fs.writeFile(path.join(staticDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+	}
+
 	if (localsFile) {
-		const styleHref = useQueryStringForHash ? `${filename}?v=${hash}` : filename;
 		// update the given file with the new css filename
 		await replaceInFile(localsFile, [
 			{
@@ -185,10 +200,11 @@ export function runBuild({
 	copyMoj,
 	accessibleAutocompleteRoot,
 	localsFile,
-	useQueryStringForHash
+	useQueryStringForHash,
+	generateManifestFile
 }: BuildOptions): Promise<void[]> {
 	const tasks = [
-		compileSass({ staticDir, srcDir, repoRoot, localsFile, useQueryStringForHash }),
+		compileSass({ staticDir, srcDir, repoRoot, localsFile, useQueryStringForHash, generateManifestFile }),
 		copyAssets({ staticDir, repoRoot, copyMoj })
 	];
 	if (accessibleAutocompleteRoot) {
