@@ -41,20 +41,26 @@ export class AuthService {
 	 */
 	async acquireTokenByCode({
 		code,
-		sessionId
+		sessionId,
+		nonce
 	}: {
 		code: string;
 		sessionId: string;
+		nonce: string;
 	}): Promise<AuthenticationResultWithNonce | null> {
 		const msalClient = this.#getMsalClient(sessionId);
 		await msalClient.getTokenCache().getAllAccounts(); // required to trigger beforeCacheAccess
+		const authCodePayload = { code, nonce }; // required for msal-node strict nonce validation
 
-		return await msalClient.acquireTokenByCode({
-			authority: this.#config.authority,
-			code,
-			redirectUri: this.#config.redirectUri,
-			scopes: this.#scopes
-		});
+		return await msalClient.acquireTokenByCode(
+			{
+				authority: this.#config.authority,
+				code,
+				redirectUri: this.#config.redirectUri,
+				scopes: this.#scopes
+			},
+			authCodePayload
+		);
 	}
 
 	/**
