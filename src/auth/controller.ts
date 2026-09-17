@@ -100,7 +100,8 @@ export function buildCompleteMsalAuthentication(
 
 			const authenticationResult = await authService.acquireTokenByCode({
 				code: request.query.code,
-				sessionId: request.session.id
+				sessionId: request.session.id,
+				nonce
 			});
 
 			// After acquiring an authentication result from MSAL, verify that the
