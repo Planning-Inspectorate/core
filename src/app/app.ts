@@ -60,6 +60,8 @@ export function createBaseApp({
 	});
 	app.use(sessionMiddleware);
 
+	app.use(...middlewares);
+
 	app.use(buildCsrfMiddleware(csrfRouteBypass, multiPartFormRoutes));
 
 	app.use(...initContentSecurityPolicyMiddlewares(cspDirectives));
@@ -74,8 +76,6 @@ export function createBaseApp({
 		nunjucksEnvironment.express(app);
 		app.set('view engine', 'njk');
 	}
-
-	app.use(...middlewares);
 
 	// register the router, which will define any subpaths
 	// any paths not defined will return 404 by default
