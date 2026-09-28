@@ -97,6 +97,14 @@ describe('errors', () => {
 			assert.strictEqual(wrapped.message.startsWith('Connection error'), true);
 			assert.strictEqual(wrapped.message.endsWith('(code: P1001)'), true);
 		});
+		test('matches only by name', () => {
+			const error = new Error('Validation error');
+			error.name = 'PrismaClientValidationError';
+			const wrapped = wrapPrismaErrors(error);
+			assert.notStrictEqual(error, wrapped);
+			assert.strictEqual(wrapped.message.startsWith('Request could not be handled'), true);
+			assert.strictEqual(wrapped.message.endsWith('(code: validation)'), true);
+		});
 	});
 	describe('wrapRedisErrors', () => {
 		test('ignores non-redis errors', () => {
