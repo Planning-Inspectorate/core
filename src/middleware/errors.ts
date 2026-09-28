@@ -38,17 +38,19 @@ export function buildDefaultErrorHandlerMiddleware(logger: Logger): ErrorRequest
  * This is a fallback, controllers should handle Prisma validation errors directly so that error messages can be specific
  */
 export function wrapPrismaErrors(error: Error): Error {
-	if (error instanceof PrismaClientKnownRequestError) {
-		return new Error(`Request could not be handled (code: ${error.code})`);
+	// match errors by name to avoid issues with references to different @prisma package versions
+	if (error.name === PrismaClientKnownRequestError.name) {
+		const code = (error as PrismaClientKnownRequestError).code;
+		return new Error(`Request could not be handled (code: ${code})`);
 	}
-	if (error instanceof PrismaClientUnknownRequestError) {
+	if (error.name === PrismaClientUnknownRequestError.name) {
 		return new Error(`Request could not be handled (code: unknown)`);
 	}
-	if (error instanceof PrismaClientValidationError) {
+	if (error.name === PrismaClientValidationError.name) {
 		return new Error(`Request could not be handled (code: validation)`);
 	}
-	if (error instanceof PrismaClientInitializationError) {
-		let code = error.errorCode;
+	if (error.name === PrismaClientInitializationError.name) {
+		let code = (error as PrismaClientInitializationError).errorCode;
 		if (!code && error.message.toLowerCase().includes(`can't reach database server`)) {
 			code = 'P1001';
 		}
