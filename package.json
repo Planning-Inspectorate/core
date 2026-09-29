@@ -71,6 +71,7 @@
     "@azure/msal-node": "6.x",
     "@prisma/client-runtime-utils": "7.x",
     "@redis/entraid": "6.x",
+    "body-parser": "^2.3.0",
     "connect-redis": "10.x",
     "express": "5.x",
     "express-session": "1.x",
