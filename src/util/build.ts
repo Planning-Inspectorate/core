@@ -20,16 +20,12 @@ interface SassOptions {
 	 * parameter (e.g. `style.css?v=<hash>`).
 	 */
 	useQueryStringForHash?: boolean;
-	/**
-	 * If true, will generate a JSON manifest file in <staticDir>/manifest.json
-	 * with JSON content of `style.css`: '<style-href>' mapping
-	 */
-	generateManifestFile?: boolean;
 }
 
 /**
  * Compile sass into a css file in the .static folder
  * Optionally, update a file which contains the css file name
+ * Return the href to the generated css file
  *
  * @see https://sass-lang.com/documentation/js-api/#md:usage
  */
@@ -38,9 +34,8 @@ async function compileSass({
 	srcDir,
 	repoRoot,
 	localsFile,
-	useQueryStringForHash,
-	generateManifestFile
-}: SassOptions): Promise<void> {
+	useQueryStringForHash
+}: SassOptions): Promise<string> {
 	const styleFile = path.join(srcDir, 'app', 'sass/style.scss');
 	const out = sass.compile(styleFile, {
 		// ensure scss can find the govuk-frontend folders
@@ -62,14 +57,6 @@ async function compileSass({
 
 	const styleHref = useQueryStringForHash ? `${filename}?v=${hash}` : filename;
 
-	// if configured, generate a simple manifest.json file with the generated style file link
-	if (generateManifestFile) {
-		const manifest = {
-			'style.css': styleHref
-		};
-		await fs.writeFile(path.join(staticDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
-	}
-
 	if (localsFile) {
 		// update the given file with the new css filename
 		await replaceInFile(localsFile, [
@@ -84,6 +71,7 @@ async function compileSass({
 		]);
 	}
 	await deleteOldCssFiles({ staticDir, filename });
+	return styleHref;
 }
 
 /**
@@ -93,7 +81,7 @@ async function compileSass({
  * @param filename
  */
 async function deleteOldCssFiles({ staticDir, filename }: { staticDir: string; filename: string }) {
-	const files = await fs.readdir(staticDir);
+	const files: string[] = await fs.readdir(staticDir);
 	const oldStyleFiles = files.filter(
 		(file) => file !== filename && file.endsWith('.css') && file.match(/^style(-[0-9a-f]{8})?\.css$/)
 	);
@@ -108,6 +96,12 @@ interface AssetOptions {
 	staticDir: string;
 	repoRoot: string;
 	copyMoj?: boolean;
+	applyAssetVersioning?: boolean;
+}
+
+interface AssetHrefs {
+	govukBaseFileName: string;
+	mojBaseFileName?: string;
 }
 
 /**
@@ -116,15 +110,25 @@ interface AssetOptions {
  *
  * @see https://frontend.design-system.service.gov.uk/importing-css-assets-and-javascript/#copy-the-font-and-image-files-into-your-application
  */
-async function copyAssets({ staticDir, repoRoot, copyMoj }: AssetOptions): Promise<void> {
-	const images = path.join(repoRoot, 'node_modules/govuk-frontend/dist/govuk/assets/images');
-	const fonts = path.join(repoRoot, 'node_modules/govuk-frontend/dist/govuk/assets/fonts');
-	const js = path.join(repoRoot, 'node_modules/govuk-frontend/dist/govuk/govuk-frontend.min.js');
-	const manifest = path.join(repoRoot, 'node_modules/govuk-frontend/dist/govuk/assets/manifest.json');
+async function copyAssets({ staticDir, repoRoot, copyMoj, applyAssetVersioning }: AssetOptions): Promise<AssetHrefs> {
+	const govukRoot = path.join(repoRoot, 'node_modules/govuk-frontend/dist/govuk');
+	let govukBaseFileName = 'govuk-frontend';
+
+	const images = path.join(govukRoot, 'assets/images');
+	const fonts = path.join(govukRoot, 'assets/fonts');
+	const js = path.join(govukRoot, 'govuk-frontend.min.js');
+	const manifest = path.join(govukRoot, 'assets/manifest.json');
+
+	if (applyAssetVersioning) {
+		govukBaseFileName = await getVersionedName(
+			path.join(repoRoot, 'node_modules/govuk-frontend/package.json'),
+			govukBaseFileName
+		);
+	}
 
 	const staticImages = path.join(staticDir, 'assets', 'images');
 	const staticFonts = path.join(staticDir, 'assets', 'fonts');
-	const staticJs = path.join(staticDir, 'assets', 'js', 'govuk-frontend.min.js');
+	const staticJs = path.join(staticDir, 'assets', 'js', `${govukBaseFileName}.min.js`);
 	const staticManifest = path.join(staticDir, 'assets', 'manifest.json');
 
 	// copy all images and fonts for govuk-frontend
@@ -133,38 +137,74 @@ async function copyAssets({ staticDir, repoRoot, copyMoj }: AssetOptions): Promi
 	await copyFile(js, staticJs);
 	await copyFile(manifest, staticManifest);
 
+	const assetsHrefs: AssetHrefs = {
+		govukBaseFileName
+	};
+
 	if (copyMoj) {
-		const mojImages = path.join(repoRoot, 'node_modules/@ministryofjustice/frontend/moj/assets/images');
-		const mojJs = path.join(repoRoot, 'node_modules/@ministryofjustice/frontend/moj/moj-frontend.min.js');
-		const staticMojJs = path.join(staticDir, 'assets', 'js', 'moj-frontend.min.js');
+		const mojRoot = path.join(repoRoot, 'node_modules/@ministryofjustice/frontend');
+		let mojBaseFileName = 'moj-frontend';
+
+		const mojImages = path.join(mojRoot, 'moj/assets/images');
+		const mojJs = path.join(mojRoot, 'moj/moj-frontend.min.js');
+
+		if (applyAssetVersioning) {
+			mojBaseFileName = await getVersionedName(path.join(mojRoot, 'package.json'), mojBaseFileName);
+		}
+
+		const staticMojJs = path.join(staticDir, 'assets', 'js', `${mojBaseFileName}.min.js`);
+
 		// copy images and js for @ministryofjustice/frontend
 		await copyFolder(mojImages, staticImages);
 		await copyFile(mojJs, staticMojJs);
+		assetsHrefs.mojBaseFileName = mojBaseFileName;
 	}
+	return assetsHrefs;
 }
 
 interface AutocompleteOptions {
 	staticDir: string;
 	root: string;
+	applyAssetVersioning?: boolean;
 }
 
 /**
  * Copy accessible-autocomplete assets into the .static folder
+ * @param staticDir
+ * @param root - the root of the accessible-autocomplete package (where the minified js and css files are located)
+ * @param [applyAssetVersioning] - if true, will append the version number to the copied autocomplete asset files
  */
-async function copyAutocompleteAssets({ staticDir, root }: AutocompleteOptions): Promise<void> {
+async function copyAutocompleteAssets({ staticDir, root, applyAssetVersioning }: AutocompleteOptions): Promise<string> {
 	const js = path.join(root, 'accessible-autocomplete.min.js');
 	const css = path.join(root, 'accessible-autocomplete.min.css');
+	let baseFileName = 'accessible-autocomplete';
 
-	const staticJs = path.join(staticDir, 'assets', 'js', 'accessible-autocomplete.min.js');
-	const staticCss = path.join(staticDir, 'assets', 'css', 'accessible-autocomplete.min.css');
+	if (applyAssetVersioning) {
+		baseFileName = await getVersionedName(path.join(root, 'package.json'), baseFileName);
+	}
+
+	const staticJs = path.join(staticDir, 'assets', 'js', `${baseFileName}.min.js`);
+	const staticCss = path.join(staticDir, 'assets', 'css', `${baseFileName}.min.css`);
 
 	await copyFile(js, staticJs);
 	await copyFile(css, staticCss);
+
+	return baseFileName;
 }
 
 interface BuildOptions extends SassOptions {
 	accessibleAutocompleteRoot?: string;
 	copyMoj?: boolean;
+	/**
+	 * If true, will append the version number to the copied asset files
+	 * (govuk-frontend, moj-frontend, accessible-autocomplete)
+	 */
+	applyAssetVersioning?: boolean;
+	/**
+	 * If true, will generate a JSON manifest file in <staticDir>/manifest.json
+	 * with JSON content of `style.css`: '<style-href>' mapping
+	 */
+	generateManifestFile?: boolean;
 }
 
 interface Replacement {
@@ -190,10 +230,58 @@ async function replaceInFile(file: string, replacements: Replacement[]) {
 	await fs.writeFile(file, newContent, 'utf8');
 }
 
+interface ManifestItems {
+	styleHref: string;
+	assetsHrefs: AssetHrefs;
+	autocompleteBaseFilename?: string;
+}
+
+interface Manifest {
+	'style.css': string;
+	'govuk-frontend.min.js': string;
+	'moj-frontend.min.js'?: string;
+	'accessible-autocomplete.min.js'?: string;
+	'accessible-autocomplete.min.css'?: string;
+}
+
+async function generateManifest(
+	staticDir: string,
+	options: ManifestItems,
+	generateManifestFile: boolean = false
+): Promise<Manifest> {
+	const manifest = {
+		'style.css': options.styleHref,
+		'govuk-frontend.min.js': `${options.assetsHrefs.govukBaseFileName}.min.js`,
+		...(options.assetsHrefs.mojBaseFileName && {
+			'moj-frontend.min.js': `${options.assetsHrefs.mojBaseFileName}.min.js`
+		}),
+		...(options.autocompleteBaseFilename && {
+			'accessible-autocomplete.min.js': `${options.autocompleteBaseFilename}.min.js`,
+			'accessible-autocomplete.min.css': `${options.autocompleteBaseFilename}.min.css`
+		})
+	};
+
+	if (generateManifestFile) {
+		await fs.writeFile(path.join(staticDir, 'manifest.json'), JSON.stringify(manifest, null, 2));
+	}
+
+	return manifest;
+}
+
+async function getVersionedName(packageJsonPath: string, basename: string): Promise<string> {
+	try {
+		const version = JSON.parse(await fs.readFile(packageJsonPath, 'utf8')).version;
+		return `${basename}-${version}`;
+	} catch {
+		// if the package.json file doesn't exist, just return the unversioned name
+		return basename;
+	}
+}
+
 /**
  * Do all steps to run the build
  */
-export function runBuild({
+export async function runBuild({
 	staticDir,
 	srcDir,
 	repoRoot,
@@ -201,14 +289,15 @@ export function runBuild({
 	accessibleAutocompleteRoot,
 	localsFile,
 	useQueryStringForHash,
-	generateManifestFile
-}: BuildOptions): Promise<void[]> {
-	const tasks = [
-		compileSass({ staticDir, srcDir, repoRoot, localsFile, useQueryStringForHash, generateManifestFile }),
-		copyAssets({ staticDir, repoRoot, copyMoj })
-	];
-	if (accessibleAutocompleteRoot) {
-		tasks.push(copyAutocompleteAssets({ staticDir, root: accessibleAutocompleteRoot }));
-	}
-	return Promise.all(tasks);
+	generateManifestFile,
+	applyAssetVersioning
+}: BuildOptions): Promise<Manifest> {
+	const [styleHref, assetsHrefs, autocompleteBaseFilename] = await Promise.all([
+		compileSass({ staticDir, srcDir, repoRoot, localsFile, useQueryStringForHash }),
+		copyAssets({ staticDir, repoRoot, copyMoj, applyAssetVersioning }),
+		accessibleAutocompleteRoot
+			? copyAutocompleteAssets({ staticDir, root: accessibleAutocompleteRoot, applyAssetVersioning })
+			: Promise.resolve(undefined)
+	]);
+	return generateManifest(staticDir, { styleHref, assetsHrefs, autocompleteBaseFilename }, generateManifestFile);
 }
