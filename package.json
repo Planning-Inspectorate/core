@@ -68,7 +68,7 @@
   "dependencies": {
     "@azure/identity": "4.x",
     "@azure/msal-common": "16.x",
-    "@azure/msal-node": "6.x",
+    "@azure/msal-node": "7.x",
     "@prisma/client-runtime-utils": "7.x",
     "@redis/entraid": "6.x",
     "body-parser": "^2.3.0",
