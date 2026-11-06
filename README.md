@@ -32,10 +32,10 @@ export function buildRouter(service: ManageService): IRouter {
     const router = createRouter();
     const monitoringRoutes = createMonitoringRoutes(service);
 
-    // add monitoring routes for e.g. health endpoint and responding to HEAD requests
+    //add monitoring routes for e.g. health endpoint and responding to HEAD requests
     router.use('/', monitoringRoutes);
 
-    // other routes here....
+    //other routes here....
 
     return router;
 }
